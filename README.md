@@ -1,19 +1,21 @@
 # First-Project-in-cpp
 new repo
-#include <iostream>
-#include <string>
-#include <list>
-#include <queue>
-#include <stack>
-#include <algorithm>
-#include <vector>
-#include <functional>
-#include <iomanip>
-#include <fstream>
-#include <sstream>
-#include <chrono>
-#include <ctime>
-// Song structure
+Music Playlist Manager 
+A console-based Music Playlist Manager that demonstrates an understanding of data structures and algorithms. This system allows users to create playlists, add and remove songs, and generate playlists based on user preferences.
+The system uses at least three data structures:
+1.	Linked List (for managing a collection of songs in a playlist).
+2.	Stack (for undo functionality, to remove the last action taken).
+3.	Priority Queue (for sorting songs based on user ratings).
+It also implements at least two algorithms:
+1.	Sorting Algorithm: To sort songs based on their ratings.
+2.	Searching Algorithm: To find a song by its title
+Key Concepts Demonstrated:
+1.	Linked List: Used for managing a playlist of songs. The Playlist class uses std::list to store songs, supporting efficient addition, removal, and traversal.
+2.	Stack: Used for undo functionality, allowing users to undo the last action (add or remove song). The UndoStack class utilizes std::stack to store actions.
+3.	Priority Queue: Used to manage songs based on their ratings. The SongPriorityQueue class utilizes std::priority_queue and a custom comparator to ensure that songs are sorted by their ratings.
+4.	Sorting Algorithm: The sortByRating()
+Song Structure
+The Song struct represents an individual song. It stores the title, artist, and rating of the song.
 struct Song {
     std::string title;
     std::string artist;
@@ -37,23 +39,22 @@ struct Song {
         return Song(title, artist, rating); // return the Song object 'title', 'artist', and 'rating'
     }
 };
-
-// UndoAction class to store undoable actions (add or remove)
-struct UndoAction { //-https://www.w3schools.com/cpp/cpp_enum.asp
-
-   enum class ActionType { ADD, REMOVE }; // enum class to define the type of action being tracked: ADD or REMOVE
-    ActionType actionType; // Member variable for store the type of action (either ADD or REMOVE)
-    Song song;
-
-    UndoAction(ActionType action, const Song& s) : actionType(action), song(s) {} //initializer list to set the actionType and song
-};
-
+•	title: The title of the song.
+•	artist: The artist who performed the song.
+•	rating: A rating between 1 and 5 to represent how good the song is.
+The constructor initializes these attributes when creating a new song.
+CompareSongRating Structure (Comparator)
+A comparator CompareSongRating is used for sorting songs in a priority queue by their rating.
 // Comparator for priority queue to sort by rating
 struct CompareSongRating {
     bool operator()(const Song& a, const Song& b) {
         return a.rating < b.rating;  // Higher ratings have higher priority
     }
 };
+•	This is a functor (a class with operator() defined) that will be used to compare two Song objects.
+•	It sorts songs in descending order of their rating, meaning higher-rated songs will have higher priority in the priority queue.
+Playlist Class (Linked List)
+This class manages the playlist using a doubly linked list (std::list).
 
 // Linked list for managing songs in a playlist
 class Playlist {
@@ -192,7 +193,14 @@ public:
         std::cout << "Playlist loaded from " << filename << "\n"; //to comfirm the losd
     }
 };
-
+•  addSong: Adds a song to the playlist (songs.push_back()).
+•  removeSong: Removes a song by title (iterates through the list to find and erase it).
+•  displayPlaylist: Displays all the songs in the playlist.
+•  searchSong: Searches for a song by its title in the playlist.
+•  sortByRating: Sorts the songs in the playlist by rating using the list::sort method (C++ STL).
+•  generateTopPlaylist: Generates a list of songs with ratings greater than or equal to the given threshold.
+UndoStack Class (Stack)
+This class manages the undo functionality using a stack
 // UndoStack class managing undo and redo operations
 class UndoStack {
 private:
@@ -258,234 +266,5 @@ public:
         }
     }
 };
-// Priority Queue for managing songs sorted by rating
-class SongPriorityQueue {
-private:
-   
-            // The priority queue to store songs, sorted by rating.
-            // The CompareSongRating class will be used to define the comparison logic.
-    std::priority_queue<Song, std::vector<Song>, CompareSongRating> songQueue;
-    
-public:
-    // function to add a song to the priority queue
-    void addSong(const Song& song) {
-        songQueue.push(song);  // Adds the song to the priority queue
-        std::cout << "Song '" << song.title << "' by " << song.artist << " added to the priority queue.\n";
-       
-    }
-    // function to display the top songs in the priority queue
-    void displayTopSongs() const {
-        if (songQueue.empty()) {  // Check if the priority queue is empty
-            std::cout << "No songs in the priority queue.\n";
-            return; // exit the function
-        }
-
-        std::cout << "********** Top rated songs in priority queue **********\n";
-        std::cout << std::setw(35) << std::left << "TITLE"
-            << std::setw(20) << std::left << "ARTIST"
-            << std::setw(10) << std::right << "RATING\n";
-        std::cout << std::setfill('-') << std::setw(65) << "" << std::setfill(' ') << '\n';  // for a separator line
-            // temporary copy of the priority queue so we can iterate over it without modifying the original queue
-            std::priority_queue<Song, std::vector<Song>, CompareSongRating> tempQueue = songQueue;
-            // Iterate through the songs in the temporary priority queue
-            while (!tempQueue.empty()) {
-                const Song& s= tempQueue.top(); // Get the song with the highest rating (top of the queue)
-                    // Print the song title, artist, and rating to the console
-                    std::cout << std::setw(35) << std::left << s.title  
-                        << std::setw(20) << std::left << s.artist
-                        << std::setw(5) << std::right << "[ " << s.rating << "/5 ] \n";
-                    tempQueue.pop();// Remove the song from the temporary queue
-            }
-          
-    }
-};
-
-
-// Main application class
-class MusicPlaylistManager {
-private:
-    Playlist playlist;
-    UndoStack undoStack;
-    SongPriorityQueue priorityQueue;
-    std::string getCurrentTime() { //-https://www.w3schools.com/cpp/ref_ctime_asctime.asp
-                                   //-https://www.w3schools.com/cpp/cpp_date.asp
-        // Get current time from system clock
-        auto now = std::chrono::system_clock::now();
-        std::time_t time = std::chrono::system_clock::to_time_t(now);
-
-        // Convert to a readable format using std::localtime_r or std::localtime_s for thread safety
-        std::tm localTime;
-        #ifdef _WIN32
-                localtime_s(&localTime, &time);  // Use localtime_s on Windows
-        #else
-                localtime_r(&time, &localTime);  // Use localtime_r on POSIX systems
-        #endif
-
-        // Format the time (e.g., "YYYY-MM-DD HH:MM:SS")
-        std::stringstream timeStream;
-        timeStream << std::put_time(&localTime, "%Y-%m-%d %H:%M:%S");
-
-        return timeStream.str();
-    }
-    
-public:
-    MusicPlaylistManager() : undoStack(playlist) {}
-    void print_time() {
-        std::cout << std::setfill('*') << std::setw(20) << "" << std::setfill(' ');
-        std::cout << getCurrentTime(); // Display the current time
-        std::cout << std::setfill('*') << std::setw(21) << "" << std::setfill(' ');
-    }
-    void run() {
-       int choice;
-            playlist.loadFromFile("playlist.txt");  // Load playlist on startup
-            playlist.loadFromFile("priority.txt");
-
-               
-                  do {
-                        std::cout << '\n'<<std::setfill('*') << std::setw(60) << "" << std::setfill(' ') << '\n';
-                        std::cout << std::setfill(' ') << std::setw(20) << "" << std::setfill(' ') << std::setw(20);
-                        std::cout <<"Current Time : " << getCurrentTime() << "\n"; // Display the current time
-                        std::cout << "\nMusic Playlist Manager\n";
-                        std::cout << "  1. Add song\n";
-                        std::cout << "  2. Remove song\n";
-                        std::cout << "  3. Display playlist\n";
-                        std::cout << "  4. Search song\n";
-                        std::cout << "  5. Sort playlist by rating\n";
-                        std::cout << "  6. Generate playlist by rating\n";
-                        std::cout << "  7. Undo last action\n";
-                        std::cout << "  8. Redo last undone action\n";
-                        std::cout << "  9. Add song to priority queue\n";
-                        std::cout << " 10. Display top songs in priority queue\n";
-                        std::cout << "  \nPress '0' for exit\n";
-                        std::cout << std::setfill('*') << std::setw(60) << "" << std::setfill(' ') << '\n';
-                        std::cout << "Enter your choice: ";
-                        std::cin >> choice;
-                    
-                    switch (choice) {
-                    case 1: { // Add song
-                        std::string title, artist;
-                        int rating;
-                        std::cout << "Enter song title: ";
-                        std::cin.ignore();  // to clear the newline from input buffer
-                        std::getline(std::cin, title);
-                        std::cout << "Enter artist: ";
-                        std::getline(std::cin, artist);
-                        std::cout << "Enter rating (1 to 5): ";
-                        std::cin >> rating;
-                        Song song(title, artist, rating);
-                        priorityQueue.addSong(song);
-                        playlist.addSong(song);
-                        undoStack.pushAction(UndoAction(UndoAction::ActionType::ADD, song)); // Push ADD action after adding the song
-                        playlist.saveToFile("PlayList.txt");
-                        print_time();
-
-                        break;
-                    }
-                    case 2: { //. Remove song
-                        std::string title;
-                        std::cout << "Enter song title to remove: ";
-                        std::cin.ignore();  // clear the newline
-                        std::getline(std::cin, title);
-                        Song songToRemove = playlist.findSong(title);  // Find the song object to store for undo
-                        if (songToRemove.title.empty()) {
-                            std::cout << "Song not found in the playlist.\n";
-                        }
-                        else {
-                            playlist.removeSong(title);
-                            undoStack.pushAction(UndoAction(UndoAction::ActionType::REMOVE, songToRemove));  // Push REMOVE action after removing the song
-                        }
-                        print_time();
-
-                        break;
-                    }
-                    case 3: //Display playlist
-                        playlist.displayPlaylist();
-                        print_time();
-
-                        break;
-                    case 4: {
-                        std::string title;
-                        std::cout << "Enter song title to search: ";
-                        std::cin.ignore();  // clear the newline
-                        std::getline(std::cin, title);
-                        playlist.searchSong(title);
-                        print_time();
-
-                        break;
-                    }
-                    case 5: {//Search song
-                        playlist.sortByRating();
-                        playlist.displayPlaylist();
-                        print_time();
-                      
-                        break;
-                    }
-                    case 6: {
-                        int rate;
-                        std::cout << "Enter rating from (1-5): ";
-                        std::cin >> rate;
-                        playlist.generateTopPlaylist(rate);
-                        print_time();
-
-                        break;
-                    }
-                    case 7:
-                        undoStack.undoAction();// Call undo action here
-                        playlist.displayPlaylist();
-                        print_time();
-
-                        break;
-                    case 8:
-                        undoStack.redoAction();  // Call redo action here
-                        // Call undo action here
-                       print_time();
-                        break;
-                    case 9: {
-                        std::string title, artist;
-                        int rating;
-                        std::cout << "Enter song title: ";
-                        std::cin.ignore();  // clear the newline
-                        std::getline(std::cin, title);
-                        std::cout << "Enter artist: ";
-                        std::getline(std::cin, artist);
-                        std::cout << "Enter rating (1 to 5): ";
-                        std::cin >> rating;
-                        Song song(title, artist, rating);
-                        priorityQueue.addSong(song);                      
-                        print_time();
-                        
-                        break;
-                    }
-                    case 10:
-
-                        priorityQueue.displayTopSongs();
-                        print_time();
-
-                        break;
-                    case 0:
-                     
-                        playlist.saveToFile("playlist.txt");  // Save playlist to file on exit
-                        std::cout << "Exiting program.\n";
-                        print_time();
-
-                        break;
-                    default:
-                        std::cout << "Invalid choice. Please try again.\n";
-                       
-                    }
-                    
-                  } while (choice != 0 );
-          
-    }
-};
-
-// Main function
-int main() {
-    std::cout << std::setfill('*') << std::setw(55) << "" << std::setfill(' ') << '\n';
-    std::cout << "      -MUSIC PLAYLIST MANAGER-\n";
-    std::cout << "     Programmed by: Ryan Morao\n";
-    std::cout << std::setfill('*') << std::setw(55) << "" << std::setfill(' ') << '\n';
-    MusicPlaylistManager manager;
-    manager.run();
-    return 0;
-}
+•	pushAction: Pushes an action (like "Add song" or "Remove song") onto the undo stack.
+•	undoAction: Pops the last action from the stack and prints it. This simulates undoing the last action performed.
